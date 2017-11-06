@@ -1,6 +1,10 @@
 package befaster.solutions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class Checkout {
 
@@ -8,22 +12,28 @@ public class Checkout {
 	
 	public Checkout() {
 		productsMap = new HashMap<>();
-		productsMap.put("A", new Item("A", 50, 3, 130));
-		productsMap.put("B", new Item("B", 30, 2, 45));
-		productsMap.put("C", new Item("C", 20, 1, 20));
-		productsMap.put("D", new Item("D", 15, 1, 15));
+	
+		Item itemA = new Item("A", 50, Arrays.asList(new PriceDiscount(3, 130), new PriceDiscount(5, 200)), Collections.emptyList());
+		Item itemB = new Item("B", 30, Collections.singletonList(new PriceDiscount(2, 45)), Collections.emptyList());
+		Item itemC = new Item("C", 20, Collections.emptyList(), Collections.emptyList());
+		Item itemD = new Item("D", 15, Collections.emptyList(), Collections.emptyList());
+		Item itemE = new Item("E", 40, Collections.emptyList(), Collections.singletonList(new FreebieDiscount(2, "B")));
+		
+		productsMap.put("A", itemA);
+		productsMap.put("B", itemB);
+		productsMap.put("C", itemC);
+		productsMap.put("D", itemD);
+		productsMap.put("E", itemE);
 	}
 	
-	public int getPrice(String name) {
-		if(name == null) {
+	public int getPrice(String items) {
+		if(items == null) {
 			return -1;
 		}
 		
-		int price = 0;
-		
 		HashMap<String, Integer> countsMap = getEmptyCountsMap();
 		
-		for(char c: name.toCharArray()) {
+		for(char c: items.toCharArray()) {
 			String item = Character.toString(c);
 
 			if(productsMap.containsKey(item)) {
@@ -34,14 +44,46 @@ public class Checkout {
 			}
 		}
 		
-		for(String item: countsMap.keySet()) {
-			int count = countsMap.get(item);
-			int itemsPrice = getItemsPrice(item, count);
+		return getTotalPriceAfterApplyingFreebieDiscount(countsMap);
+	}
+	
+	private int getTotalPriceAfterApplyingFreebieDiscount(HashMap<String, Integer> countsMap) {
+		int bestPrice = getTotalPriceForCountsMap(countsMap);
+		
+		for(FreebieDiscount freebieDiscount: productsMap.get("E").getFreebieDiscounts()) {
+			int countE = countsMap.get("E");
+			int batchSizeForFreebie = freebieDiscount.getBatchSize();
+			String freebieItemName = freebieDiscount.getFreebieItemName();
+			int countApplicableFreebieDiscounts = countE / batchSizeForFreebie;
+			int freeBitItemCount = countsMap.get(freebieItemName);
 			
-			price += itemsPrice;
+			for(int i = 1; i <= countApplicableFreebieDiscounts; i++) {
+				if(i <= freeBitItemCount) {
+					HashMap<String, Integer> countsMapCopy = new HashMap<>(countsMap);
+					countsMapCopy.put(freebieItemName, freeBitItemCount - i);
+					int newPrice = getTotalPriceForCountsMap(countsMapCopy);
+					bestPrice = Math.min(bestPrice, newPrice);
+				}
+				
+			}
 		}
 		
-		return price;
+		return bestPrice;
+	}
+	
+	private int getTotalPriceForCountsMap(HashMap<String, Integer> countsMap) {
+		HashMap<String, Integer> totalPricesMap = getEmptyCountsMap();
+		
+		for(String item: countsMap.keySet()) {
+			int countForItem = countsMap.get(item);
+			int normalPriceForItem = productsMap.get(item).getNormalPricePerItem();
+			List<PriceDiscount> priceDiscountsForItem = productsMap.get(item).getPriceDiscounts();
+			int totalPriceForItem = getTotalPriceForItem(countForItem, normalPriceForItem, priceDiscountsForItem);
+			
+			totalPricesMap.put(item, totalPriceForItem);
+		}
+		
+		return addTotalPrices(totalPricesMap);
 	}
 	
 	private HashMap<String, Integer> getEmptyCountsMap() {
@@ -50,15 +92,42 @@ public class Checkout {
 		counts.put("B", 0);
 		counts.put("C", 0);
 		counts.put("D", 0);
+		counts.put("E", 0);
+		
 		return counts;
 	}
 	
-	private int getItemsPrice(String name, int count) {
-		Item item = productsMap.get(name);
+	private int getTotalPriceForItem(int count, 
+									int normalPriceForItem,
+									List<PriceDiscount> priceDiscounts) {
+		int bestPrice = count * normalPriceForItem;
 		
-		int discountPrice = (count / item.getDiscountBatchSize()) * item.getDiscountBatchPrice();
-		int normalPrice = (count % item.getDiscountBatchSize()) * item.getNormalPricePerItem();
+		for(PriceDiscount priceDiscount: priceDiscounts) {
+			List<PriceDiscount> priceDiscountsCopy = new ArrayList<>(priceDiscounts);
+			priceDiscountsCopy.remove(priceDiscount);
+			
+			int numDiscountBatches = count / priceDiscount.getBatchSize();
+			int numItemsNotDiscounted = count - (numDiscountBatches * priceDiscount.getBatchSize());
+			
+			int discountPrice = numDiscountBatches * priceDiscount.getBatchPrice();
+			int remainderPrice = getTotalPriceForItem(numItemsNotDiscounted, normalPriceForItem, priceDiscountsCopy);
+			
+			int price = discountPrice + remainderPrice;
+			
+			bestPrice = Math.min(bestPrice, price); 
+		}
 		
-		return discountPrice + normalPrice;
+		return bestPrice;
+	}
+	
+	private int addTotalPrices(HashMap<String, Integer> totalPricesMap) {
+		int totalPrice = 0;
+		
+		for(String item: totalPricesMap.keySet()) {
+			int totalPriceForItem = totalPricesMap.get(item);
+			totalPrice += totalPriceForItem;
+		}
+		
+		return totalPrice;
 	}
 }
