@@ -17,13 +17,15 @@ public class Checkout {
 		Item itemB = new Item("B", 30, Collections.singletonList(new PriceDiscount(2, 45)), Collections.emptyList());
 		Item itemC = new Item("C", 20, Collections.emptyList(), Collections.emptyList());
 		Item itemD = new Item("D", 15, Collections.emptyList(), Collections.emptyList());
-		Item itemE = new Item("E", 40, Collections.emptyList(), Collections.singletonList(new FreebieDiscount(2, "B")));
+		Item itemE = new Item("E", 40, Collections.emptyList(), Collections.singletonList(new FreebieDiscount(2, "B", 2)));
+		Item itemF = new Item("F", 10, Collections.emptyList(), Collections.singletonList(new FreebieDiscount(2, "F", 3)));
 		
 		productsMap.put("A", itemA);
 		productsMap.put("B", itemB);
 		productsMap.put("C", itemC);
 		productsMap.put("D", itemD);
 		productsMap.put("E", itemE);
+		productsMap.put("F", itemF);
 	}
 	
 	public int getPrice(String items) {
@@ -50,21 +52,28 @@ public class Checkout {
 	private int getTotalPriceAfterApplyingFreebieDiscount(HashMap<String, Integer> countsMap) {
 		int bestPrice = getTotalPriceForCountsMap(countsMap);
 		
-		for(FreebieDiscount freebieDiscount: productsMap.get("E").getFreebieDiscounts()) {
-			int countE = countsMap.get("E");
-			int batchSizeForFreebie = freebieDiscount.getBatchSize();
-			String freebieItemName = freebieDiscount.getFreebieItemName();
-			int countApplicableFreebieDiscounts = countE / batchSizeForFreebie;
-			int freeBitItemCount = countsMap.get(freebieItemName);
-			
-			for(int i = 1; i <= countApplicableFreebieDiscounts; i++) {
-				if(i <= freeBitItemCount) {
-					HashMap<String, Integer> countsMapCopy = new HashMap<>(countsMap);
-					countsMapCopy.put(freebieItemName, freeBitItemCount - i);
-					int newPrice = getTotalPriceForCountsMap(countsMapCopy);
-					bestPrice = Math.min(bestPrice, newPrice);
+		for(String productName: productsMap.keySet()) {
+			for(FreebieDiscount freebieDiscount: productsMap.get(productName).getFreebieDiscounts()) {
+				int productCount = countsMap.get(productName);
+				
+				if(productCount < freebieDiscount.getMinCount()) {
+					continue;
 				}
 				
+				int batchSizeForFreebie = freebieDiscount.getBatchSize();
+				String freebieItemName = freebieDiscount.getFreebieItemName();
+				int numItemsAvailableForDiscount = productCount / batchSizeForFreebie;
+				int freeBitItemCount = countsMap.get(freebieItemName);
+				
+				for(int i = 1; i <= numItemsAvailableForDiscount; i++) {
+					if(i <= freeBitItemCount) {
+						HashMap<String, Integer> countsMapCopy = new HashMap<>(countsMap);
+						countsMapCopy.put(freebieItemName, freeBitItemCount - i);
+						int newPrice = getTotalPriceForCountsMap(countsMapCopy);
+						bestPrice = Math.min(bestPrice, newPrice);
+					}
+					
+				}
 			}
 		}
 		
@@ -93,6 +102,7 @@ public class Checkout {
 		counts.put("C", 0);
 		counts.put("D", 0);
 		counts.put("E", 0);
+		counts.put("F", 0);
 		
 		return counts;
 	}

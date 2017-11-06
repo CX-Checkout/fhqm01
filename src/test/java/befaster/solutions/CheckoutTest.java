@@ -53,7 +53,12 @@ public class CheckoutTest {
 	
 	@Test
 	public void checkout_Fx1() {
-		assertThat(checkout.getPrice("F"), equalTo(-1));
+		assertThat(checkout.getPrice("F"), equalTo(10));
+	}
+	
+	@Test
+	public void checkout_Gx1() {
+		assertThat(checkout.getPrice("G"), equalTo(-1));
 	}
 	
 	@Test
@@ -127,18 +132,38 @@ public class CheckoutTest {
 	}
 	
 	@Test
+	public void checkout_Fx2() {
+		assertThat(checkout.getPrice("FF"), equalTo(20));
+	}
+	
+	@Test
+	public void checkout_Fx3() {
+		assertThat(checkout.getPrice("FFF"), equalTo(20));
+	}
+	
+	@Test
+	public void checkout_Fx4() {
+		assertThat(checkout.getPrice("FFFF"), equalTo(30));
+	}
+	
+	@Test
+	public void checkout_Fx6() {
+		assertThat(checkout.getPrice("FFFFFF"), equalTo(40));
+	}
+	
+	@Test
 	public void checkout_EEB() {
 		assertThat(checkout.getPrice("EEB"), equalTo(80));
 	}
 	
 	@Test
-	public void checkout_AAAAAEEBAAABB() {
-		assertThat(checkout.getPrice("AAAAAEEBAAABB"), equalTo(455));
+	public void checkout_EBEB() {
+		assertThat(checkout.getPrice("EBEB"), equalTo(110));
 	}
 	
 	@Test
-	public void checkout_EBEB() {
-		assertThat(checkout.getPrice("EBEB"), equalTo(110));
+	public void checkout_AAAAAEEBAAABB() {
+		assertThat(checkout.getPrice("AAAAAEEBAAABB"), equalTo(455));
 	}
 	
 	@Test

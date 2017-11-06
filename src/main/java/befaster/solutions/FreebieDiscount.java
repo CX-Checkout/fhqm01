@@ -4,10 +4,14 @@ public class FreebieDiscount {
 
 	private final int batchSize;
 	private final String freebieItemName;
+	private final int minCount;
 	
-	public FreebieDiscount(int batchSize, String freebieItemName) {
+	public FreebieDiscount(int batchSize, 
+							String freebieItemName,
+							int minCount) {
 		this.batchSize = batchSize;
 		this.freebieItemName = freebieItemName;
+		this.minCount = minCount;
 	}
 
 	public int getBatchSize() {
@@ -17,6 +21,10 @@ public class FreebieDiscount {
 	public String getFreebieItemName() {
 		return freebieItemName;
 	}
+	
+	public int getMinCount() {
+		return minCount;
+	}
 
 	@Override
 	public int hashCode() {
@@ -24,6 +32,7 @@ public class FreebieDiscount {
 		int result = 1;
 		result = prime * result + batchSize;
 		result = prime * result + ((freebieItemName == null) ? 0 : freebieItemName.hashCode());
+		result = prime * result + minCount;
 		return result;
 	}
 
@@ -43,8 +52,8 @@ public class FreebieDiscount {
 				return false;
 		} else if (!freebieItemName.equals(other.freebieItemName))
 			return false;
+		if (minCount != other.minCount)
+			return false;
 		return true;
 	}
-	
-	
 }
